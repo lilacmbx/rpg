@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang = "ja">
+<head>
+	<meta charset="utf-8">
+	<meta name="author" content="K">
+	<meta name="description" content="課題で作ったものです">
+	<meta name="keywords" content="訓練校,自由課題">
+	<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=yes">
+	<link rel='stylesheet' href='./app3.css' type='text/css' media='all'>
+	<title>試作品</title>
+
+	<script type="text/javascript" src="./js/jquery-2.2.4.min.js"></script>
+</head>
+<body>
+<div id="l-b">
+	<div id = "mesb"></div>	<!-- メッセージボックス -->
+	<div id = "bfield">
+		<div class = "mob" id = "mob0"></div>	<!-- BOSSモンスター -->
+		<div class = "mob" id = "mob1"></div>	<!-- BOSSモンスター -->
+		<div class = "mob" id = "mob2"></div>	<!-- BOSSモンスター -->
+		<div class = "mob" id = "mob3"></div>	<!-- BOSSモンスター -->
+		<div class = "mob" id = "mob4"></div>	<!-- BOSSモンスター -->
+		<div class = "pc" id = "pc0"></div>		<!-- プレイヤー -->
+		<div id = "cbox1">
+			<ul>
+				<li id="cmda"><a href="#">たたかう</a></li>
+				<li id="cmdd"><a href="#">ぼうぎょ</a></li>
+				<li id="cmde"><a href="#">逃げる</a></li>
+			</ul>
+		</div><!--コマンドボックス1-->
+		<div id = "cbox2">
+			<ul>
+
+			</ul>
+		</div><!--コマンドボックス2-->
+	</div>					<!-- マップ -->
+	<div id = "slv"></div>			<!-- LV -->
+	<div id = "shp"></div>			<!-- HP -->
+	</div>
+<script>
+	var mode = 0;//0コマンド入力→(1実行→2効果→3結果)
+	var mnum = 5;
+	var pnum = 2;
+	var enemy = {};
+	var party = {};
+	var alls = [];
+	var _idx = 0;
+
+	//mobクラス設定
+	function baseClass( name ){
+		this.name = name;
+	}
+	baseClass.prototype ={
+		getState: function(){
+			return( this.name );
+		},
+		setState: function( num,i ){//敵パラメータ設定
+			this.type  = 'mob';
+			this.dbid    = 'mob_' + num;
+			this.id    = 'mob'+i;
+			this.name  = mdb['mob_'+num].name;
+			this.hp    = mdb['mob_'+num].hp;
+			this.atk   = mdb['mob_'+num].atk;
+			this.def   = mdb['mob_'+num].def;
+			this.spd   = mdb['mob_'+num].spd;
+			this.exp = mdb['mob_'+num].exp;
+			this.coin = mdb['mob_'+num].coin;
+		},
+		setState2: function( num ){//PCパラメータ設定
+			this.type  = 'pc';
+			this.id    = 'pc_' + num;
+			this.name  = pdb['pc_'+num].name;
+			this.hp    = pdb['pc_'+num].hp;
+			this.atk   = pdb['pc_'+num].atk;
+			this.def   = pdb['pc_'+num].def;
+			this.spd   = pdb['pc_'+num].spd;
+			this.exp = pdb['pc_'+num].exp;
+			this.coin = pdb['pc_'+num].coin;
+		},
+		setTarget: function( num ){
+			var target = Math.floor( Math.random() * $(".pc").length );
+			return target;
+		},
+		doAtk: function( num ){
+			
+		},
+		doDef: function( num ){
+			this.hp = hp - num;
+		},
+	}
+
+	//オブジェクト設定
+	function mob_model( name ){}
+	mob_model.prototype = new baseClass();
+
+	function pc_model( name ){}
+	pc_model.prototype = new baseClass();
+
+	//pcDB
+	var pdb ={
+		pc_1:{ name : "ナイト", exp : 5, coin : 10, hp : 50, atk : 3,def : 2, spd : 1 },
+		pc_2:{ name : "ウィザード", exp : 5, coin : 10, hp : 100, atk : 1, def : 5,spd : 3 },
+		pc_3:{ name : "ハンター", exp : 5, coin : 10, hp : 25, atk : 5, def : 1, spd : 2 },
+		pc_4:{ name : "プリースト", exp : 5, coin : 10, hp : 100, atk : 1, def : 5, spd : 6 },
+		pc_5:{ name : "アルケミスト", exp : 5, coin : 10, hp : 30, atk : 1, def : 2, spd : 9 },
+	};
+
+	//mobDB
+	var mdb ={
+		mob_001:{ name : "スライム（小）", exp : 5, coin : 10, hp : 50, atk : 3,def : 2, spd : 1 },
+		mob_002:{ name : "スライム（中）", exp : 5, coin : 10, hp : 100, atk : 1, def : 5,spd : 3 },
+		mob_003:{ name : "スライム（溶）", exp : 5, coin : 10, hp : 25, atk : 5, def : 1, spd : 2 },
+		mob_004:{ name : "スライム（四角）", exp : 5, coin : 10, hp : 100, atk : 1, def : 5, spd : 6 },
+		mob_005:{ name : "スライム（浮遊）", exp : 5, coin : 10, hp : 30, atk : 1, def : 2, spd : 9 },
+		mob_006:{ name : "天使", exp : 5, coin : 10, hp : 10, atk : 10, def : 5, spd : 1 },
+		mob_007:{ name : "ナーガ", exp : 5, coin : 10,	hp : 50, atk : 3,def : 2, spd : 5 },
+		mob_008:{ name : "ボス猿", exp : 5, coin : 10, hp : 100, atk : 1, def : 5, spd : 8 },
+		mob_009:{ name : "ローパー", exp : 5, coin : 10, hp : 25, atk : 5, def : 1, spd : 4 },
+		mob_010:{ name : "女戦士", exp : 5, coin : 10, hp : 100, atk : 1, def : 5, spd : 10 },
+		mob_011:{ name : "男戦士", exp : 5, coin : 10, hp : 30, atk : 1, def : 2, spd : 7 },
+		mob_012:{ name : "魔界戦士（女）", exp : 5, coin : 10, hp : 10, atk : 10, def : 5, spd : 11 },
+	};
+
+	//配列とタイマー準備
+	mobCreate();
+	pcCreate();
+	var tt = function(){
+		if( mode === 0 ){
+			//コマンド入力
+			$("#cbox1").fadeIn();
+			if( _idx === pnum ){mode++;}
+		}else if( mode === 1 ){
+			//コマンド実行
+			$("#cbox1").fadeOut();
+			alls.sort(function(a,b){return(b[0] - a[0]);});
+			for( var i = 0 ,j = alls.length; i < j ; i++){
+				console.log($.inArray(alls[0][1], enemy));
+				alls.shift();
+			};
+		
+		}else if( mode === 2 ){
+			//結果
+		}else if( mode === 3 ){
+			//コマンド入力
+		}
+	setTimeout(tt, 1000);
+	}
+	tt();
+
+	$("#cmda").on('click',function(){
+		if( _idx < pnum ){
+			$("#cbox2 ul").html('');
+			//敵の数をカウント
+			var len=0;
+			for (var i in enemy) {
+				len++;
+			}
+			for( var i = 0; i < len ; i++){
+				$("#cbox2 ul").append('<li><a href="#" class="cmdalist" enemy-id="' + i + '">' + enemy[i].name + '</a></li>')
+				$("#cbox2").fadeIn();
+			}
+		}
+	});
+	$(document).on('click', '.cmdalist', function(){
+			party[_idx].target = Math.floor($(this).attr("enemy-id"));
+			$("#cbox2").fadeOut();
+			_idx++;
+	});
+	$("#cmdd").on('click',function(){
+			$("#cbox2").fadeOut();
+	});
+	$("#cmde").on('click',function(){
+			$("#cbox2").fadeOut();
+	});
+
+	function mobCreate(){
+		for( var i = 0,j = mnum ; i < j; i++){
+			var num = Math.floor( Math.random() * 12 + 1 );
+			if( num < 10 ){
+				num = '00' + num;
+			}else if( num < 100 ){
+				num = '0' + num;
+			}
+			enemy[i] = new mob_model( 'mob_' + i );
+			enemy[i].setState(num,i);
+			$( "#mob" + i ).css({"backgroundImage":"url(./img/mob/mon_" + num + ".gif)"});
+			alls.push([enemy[i].spd,'mob' + [i]]);
+		}
+	}
+
+	function pcCreate(){
+		for( var i = 0,j = pnum ; i < j; i++){
+			party[i] = new pc_model( 'pc_' + i +1);
+			party[i].setState2(i+1);
+			alls.push([party[i].spd,party[i].name]);
+		}
+	}
+
+
+
+</script>
+</body>
+</html>

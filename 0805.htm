@@ -1,0 +1,173 @@
+<!doctype html>
+<!--0934--><!--1150-->
+<!--　ボスに重ねられてしまう→後で調整　-->
+<html lang = "ja">
+<head>
+	<meta charset="utf-8">
+	<meta name="author" content="K">
+	<meta name="description" content="課題で作ったものです">
+	<meta name="keywords" content="訓練校,自由課題">
+	<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=yes">
+	<link rel='stylesheet' href='./app3.css' type='text/css' media='all'>
+	<title>試作品</title>
+
+	<script type="text/javascript" src="./js/jquery-2.2.4.min.js"></script>
+</head>
+<body>
+<div id="layer">
+	<div id = "mesb"></div>	<!-- メッセージボックス -->
+	<div id = "map">
+		<div class = "mob boss"></div>	<!-- BOSSモンスター -->
+		<div id = "pc"></div>		<!-- プレイヤー -->
+	</div>					<!-- マップ -->
+	<div id = "slv"></div>			<!-- LV -->
+	<div id = "shp"></div>			<!-- HP -->
+</div>
+<script>
+	var flag = false;
+	var wmax = $("#map").width() / 50;	//横最大値
+	var hmax = $("#map").height() / 50;	//縦最大値
+	var mnum = 5;	//出現数
+	var mlist = ['A','B','C'];
+	mlist.sort(function(){return Math.random() - 0.5});
+	var mpos = [];	//x,y,種類
+	var dir = 1;
+		for( var i = 0; i < wmax ; i++ ){
+				mpos[i] = [];
+			for( var j = 0; j < hmax ; j++ ){
+				mpos[i][j] = '';
+			}
+		}
+	var ppos = {
+		left : 0,
+		top : 0
+	};
+	$(function(){ start(); });
+
+	function start(){
+		//後で初期化処理追加
+		//配置
+		mpos[0][0] = 'BOSS';
+		while($(".mob").length < mnum){
+			var x = Math.floor( Math.random() * 9 + 1 );
+			var y = Math.floor( Math.random() * 9 + 1 );
+			console.log(x +'/'+y);
+			if( !mpos[x][y] && ( x !== wmax -1 && y !== hmax - 1 ) ){
+				if ( x === wmax -1 && y === hmax - 1 ){ console.log( x + 'modori/' +y ); continue;}
+				mpos[x][y] = 1;
+				$("#map").append('<div class = "mob" id ="m' + x + y + '">'+x + '/'+y+'</div>');
+				$("#m"+ x + y).css({"left": x * $("#pc").width() });
+				$("#m"+ x + y).css({"top": y * $("#pc").height() });
+			}
+
+		}
+	}
+	$(document).keydown(function(e){//キー操作用
+		if( flag ){ return; }
+		flag = true;
+		var direction　= '';
+		switch(e.keyCode){
+			case 37: move(0); break;//左
+			case 38: move(1); break;//上
+			case 39: move(2); break;//右
+			case 40: move(3); break;//下
+			default: flag = false; return;
+		}
+		
+	});
+
+	function move(value){
+		flag = true;
+		ppos = $("#pc").position();
+		ppos.left = Math.floor(ppos.left / $("#pc").width());
+		ppos.top  = Math.floor(ppos.top  / $("#pc").height());
+		switch(value){
+			case 0:	ppos.left--; break;
+			case 1:	ppos.top-- ; break;
+			case 2:	ppos.left++; break;
+			case 3:	ppos.top++ ; break;
+		}
+
+		if( dir !== value ){
+			$("#pc").css({"background":"url(./img/char" + value + ".gif)"});
+			dir = value;
+			flag = false;
+			return;
+		}
+		//座標チェック
+		if( ppos.left < 0 || ppos.left > wmax - 1 || ppos.top < 0 || ppos.top > hmax - 1 ){ flag = false; return; }
+
+		//物があるかチェックなかったら移動
+		if( check() ){
+			$("#pc").css({"left": ppos.left * $("#pc").width() });
+			$("#pc").css({"top": ppos.top * $("#pc").height() });
+		}
+		console.log('dir: '+ value +' / ' + 'X:' + ppos.left + ' / Y:' + ppos.top );
+		setTimeout(function(){ flag = false; },500);
+	}
+	function attack(){
+		console.log('攻撃処理');
+	}
+	function check(){
+		if( mpos[ppos.left][ppos.top] === '' ){ return 1; }
+		//種類に応じて分ける
+		console.log('何かあった');
+	}
+
+//スマホ用
+	// 初期化
+	var myCanvas = $("#layer").get(0);
+
+	// 開始位置
+	var startX = 0;
+	var startY = 0;
+	// Canvasの位置を左上に調整
+	var offsetLeft = $("#layer").offset().left;
+	var offsetTop = $("#layer").offset().top;
+ 
+	// タッチした時
+	$("#layer").on("touchstart",function(event) {
+		// タッチスタート時のスクロールを防ぐ
+		event.preventDefault();
+
+		
+		// 開始位置としてタッチした場所を設定
+		var pageX = event.originalEvent.touches[0].pageX;
+		var pageY = event.originalEvent.touches[0].pageY;
+		startX = pageX - offsetLeft;
+		startY = pageY - offsetTop;
+	});
+ 
+	// タッチが動いた時
+	$("#layer").on("touchmove",function(event) {
+		if( flag ){ return; }
+		// 終了位置の設定
+		var pageX = event.originalEvent.touches[0].pageX;
+		var pageY = event.originalEvent.touches[0].pageY;
+		var endX = pageX - offsetLeft;
+		var endY = pageY - offsetTop;
+		
+		if(Math.abs( startY - endY ) > Math.abs( startX - endX )){
+			
+			if( startY - endY > 100){
+				move(1);
+			}else if( endY - startY > 100){
+				move(3);
+			}
+		}else{
+			if( startX - endX > 100){
+			move(0);
+			}else if( endX - startX > 100){
+				move(2);
+			}
+		}
+	});
+
+
+
+
+
+
+</script>
+</body>
+</html>
